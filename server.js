@@ -6,17 +6,19 @@ const cors = require("cors");
 
 const app = express();
 
-// 🔥 CRITICAL — allow preflight for Netlify
-app.use(cors());
-app.options("*", cors());
+// ✅ Proper CORS (no wildcard route that crashes Express)
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
 
 app.use(express.json());
 
-// ===== MongoDB =====
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log(err));
+// ===== MongoDB Connection =====
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch((err) => console.log("Mongo Error:", err));
 
 // ===== Schema =====
 const bookingSchema = new mongoose.Schema(
@@ -33,27 +35,32 @@ const Booking = mongoose.model("Booking", bookingSchema);
 
 // ===== Routes =====
 app.get("/", (req, res) => {
-  res.send("API Running");
+  res.send("API Running ✅");
 });
 
 app.post("/book", async (req, res) => {
-  console.log("BODY RECEIVED:", req.body); // 👈 debugging line
-
   try {
+    console.log("BODY RECEIVED:", req.body);
+
     const booking = new Booking(req.body);
     await booking.save();
-    res.send("Saved");
+
+    res.status(200).send("Booking Saved Successfully");
   } catch (err) {
-    console.log(err);
-    res.status(500).send("Error");
+    console.log("Save Error:", err);
+    res.status(500).send("Server Error");
   }
 });
 
 app.get("/bookings", async (req, res) => {
-  const data = await Booking.find();
-  res.json(data);
+  try {
+    const data = await Booking.find().sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).send("Error fetching bookings");
+  }
 });
 
-// ===== Server =====
+// ===== Server Start =====
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log("Server started"));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
