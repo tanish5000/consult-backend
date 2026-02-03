@@ -8,8 +8,19 @@ const cors = require("cors");
 
 const app = express();
 
+// ===== CORS FIX FOR NETLIFY =====
+app.use(
+  cors({
+    origin: [
+      "https://697e47becb88edab5a233fc0--papaya-sunburst-acd432.netlify.app",
+      "http://localhost:5500",
+    ],
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
+
 // ===== Middlewares =====
-app.use(cors());
 app.use(express.json());
 
 // ===== MongoDB Connection =====
@@ -21,21 +32,10 @@ mongoose
 // ===== Booking Schema =====
 const bookingSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-    },
-    email: {
-      type: String,
-      required: true,
-    },
-    phone: {
-      type: String,
-      required: true,
-    },
-    message: {
-      type: String,
-    },
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    message: { type: String },
   },
   { timestamps: true }
 );
@@ -58,13 +58,7 @@ app.post("/book", async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const newBooking = new Booking({
-      name,
-      email,
-      phone,
-      message,
-    });
-
+    const newBooking = new Booking({ name, email, phone, message });
     await newBooking.save();
 
     res.status(200).json({ message: "✅ Booking saved successfully" });
@@ -74,7 +68,7 @@ app.post("/book", async (req, res) => {
   }
 });
 
-// Get all bookings (for future admin panel)
+// Get all bookings
 app.get("/bookings", async (req, res) => {
   try {
     const bookings = await Booking.find().sort({ createdAt: -1 });
