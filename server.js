@@ -6,17 +6,20 @@ const cors = require("cors");
 
 const app = express();
 
-// ✅ Proper CORS (no wildcard route that crashes Express)
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"]
-}));
+// ===== CORS (VERY IMPORTANT) =====
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 
 app.use(express.json());
 
 // ===== MongoDB Connection =====
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.log("Mongo Error:", err));
 
