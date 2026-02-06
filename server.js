@@ -6,7 +6,7 @@ const cors = require("cors");
 
 const app = express();
 
-// ===== CORS (VERY IMPORTANT) =====
+// ===== Middleware =====
 app.use(
   cors({
     origin: "*",
@@ -21,15 +21,15 @@ app.use(express.json());
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
-  .catch((err) => console.log("Mongo Error:", err));
+  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
 // ===== Schema =====
 const bookingSchema = new mongoose.Schema(
   {
-    name: String,
-    email: String,
-    phone: String,
-    message: String,
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    message: { type: String },
   },
   { timestamps: true }
 );
@@ -48,10 +48,10 @@ app.post("/book", async (req, res) => {
     const booking = new Booking(req.body);
     await booking.save();
 
-    res.status(200).send("Booking Saved Successfully");
+    res.status(200).json({ message: "Booking Saved Successfully" });
   } catch (err) {
-    console.log("Save Error:", err);
-    res.status(500).send("Server Error");
+    console.error("❌ Save Error:", err);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
@@ -60,10 +60,13 @@ app.get("/bookings", async (req, res) => {
     const data = await Booking.find().sort({ createdAt: -1 });
     res.json(data);
   } catch (err) {
-    res.status(500).send("Error fetching bookings");
+    console.error("❌ Fetch Error:", err);
+    res.status(500).json({ message: "Error fetching bookings" });
   }
 });
 
 // ===== Server Start =====
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
